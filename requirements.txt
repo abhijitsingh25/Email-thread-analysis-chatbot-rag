@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+streamlit
+mail-parser
+python-magic
+pdfminer.six
+pymupdf
+python-docx
+rank_bm25
+nltk
+sentence-transformers    
+faiss-cpu                
+pydantic
+sqlalchemy
+tinydb
+python-multipart
+aiofiles
