@@ -15,3 +15,9 @@ sqlalchemy
 tinydb
 python-multipart
 aiofiles
+numpy
+scipy
+transformers
+accelerate
+scikit-learn
+pandas

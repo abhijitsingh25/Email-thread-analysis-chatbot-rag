@@ -1,5 +1,5 @@
 import pandas as pd
-import re, os, hashlib, argparse
+import re, os, hashlib, argparse, json
 from datetime import datetime
 from email import message_from_string
 
@@ -34,12 +34,28 @@ def extract_metadata(raw_msg: str):
         return None
 
 def filter_date_range(df, start, end):
-    """Filter dataframe between given dates if available."""
     mask = (df["date"].notnull()) & (df["date"] >= start) & (df["date"] <= end)
     return df.loc[mask]
 
+def add_thread_labels(subset_df, out_dir):
+    """Add T-XXXX labels and save thread_map.json."""
+    unique_threads = sorted(subset_df["thread_id"].unique())
+    thread_map = {tid: f"T-{i+1:04d}" for i, tid in enumerate(unique_threads)}
+
+    # Add new column
+    subset_df["thread_label"] = subset_df["thread_id"].map(thread_map)
+
+    # Save mapping
+    os.makedirs(out_dir, exist_ok=True)
+    with open(os.path.join(out_dir, "thread_map.json"), "w") as f:
+        json.dump(thread_map, f, indent=4)
+
+    print(f"🆕 Added thread_label column and saved thread_map.json")
+    return subset_df
+
+
 def make_enron_slice(csv_path, out_path="sample_enron_slice.csv", start_date=None, end_date=None, max_threads=20, max_msgs=300):
-    print(f"📂 Reading: {csv_path}")
+    print(f"Reading: {csv_path}")
     df = pd.read_csv(csv_path)
 
     rows = []
@@ -48,7 +64,7 @@ def make_enron_slice(csv_path, out_path="sample_enron_slice.csv", start_date=Non
         if meta:
             rows.append(meta)
     meta_df = pd.DataFrame(rows)
-    print(f"✅ Parsed {len(meta_df)} messages")
+    print(f"Parsed {len(meta_df)} messages")
 
     if start_date and end_date:
         start = datetime.strptime(start_date, "%Y-%m-%d")
@@ -65,21 +81,24 @@ def make_enron_slice(csv_path, out_path="sample_enron_slice.csv", start_date=Non
     for t_id, group in selected_threads:
         for _, r in group.head(max_msgs // max_threads).iterrows():
             subset_rows.append(r)
+
     subset_df = pd.DataFrame(subset_rows).drop_duplicates(subset="message_id")
 
-    print(f"🧩 Selected {subset_df.thread_id.nunique()} threads and {len(subset_df)} messages")
+    print(f" Selected {subset_df.thread_id.nunique()} threads and {len(subset_df)} messages")
 
-    # approximate text size
     total_text_mb = subset_df["body"].astype(str).str.len().sum() / (1024 * 1024)
-    print(f"💾 Approx text size: {total_text_mb:.2f} MB")
+    print(f" Approx text size: {total_text_mb:.2f} MB")
 
     if total_text_mb > 100:
-        # reduce further randomly
         subset_df = subset_df.sample(frac=100/total_text_mb, random_state=42)
-        print(f"🔪 Trimmed to ~100MB: {len(subset_df)} messages")
+        print(f" Trimmed to ~100MB: {len(subset_df)} messages")
+
+    # Add thread labels + mapping file
+    subset_df = add_thread_labels(subset_df, out_dir=os.path.dirname(out_path))
 
     subset_df.to_csv(out_path, index=False)
-    print(f"✅ Saved slice → {out_path}")
+    print(f" Saved slice → {out_path}")
+
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description="Make a small slice of Enron dataset")

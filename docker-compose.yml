@@ -1,0 +1,23 @@
+version: "3.9"
+
+services:
+  email_rag:
+    build: .
+    container_name: email_rag_app
+
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+
+    volumes:
+      - ./backend/store:/app/backend/store
+      - ./data:/app/data
+      - ./runs:/app/runs
+      - ./hf_cache:/app/cache
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TRANSFORMERS_CACHE=/app/cache
+      - HF_HOME=/app/cache
+
+    restart: unless-stopped

@@ -1,32 +1,45 @@
-# indexer.py
-import json, argparse
+# indexer.py (Hybrid Index)
+import json, pickle, numpy as np
 from rank_bm25 import BM25Okapi
+from sentence_transformers import SentenceTransformer
+import faiss
 from nltk.tokenize import word_tokenize
-import pickle
+from pathlib import Path
+import nltk
 
-def build_bm25(chunks_jsonl, out_index="bm25_index.pkl", out_docs="docs.pkl"):
-    docs = []
-    metas = []
-    tokenized = []
-    for line in open(chunks_jsonl, encoding="utf-8"):
+nltk.download("punkt", quiet=True)
+
+def build_hybrid_index(chunks_file="backend/store/chunks.jsonl"):
+    texts, tokens, metas = [], [], []
+
+    for line in open(chunks_file, encoding="utf-8"):
         j = json.loads(line)
-        text = j.get("text","")
-        tokens = word_tokenize(text.lower())
-        docs.append(tokens)
+        texts.append(j["text"])
+        tokens.append(word_tokenize(j["text"].lower()))
         metas.append(j)
-        tokenized.append(tokens)
-    bm25 = BM25Okapi(tokenized)
-    with open(out_index, "wb") as f:
-        pickle.dump(bm25, f)
-    with open(out_docs, "wb") as f:
-        pickle.dump(metas, f)
-    print("Saved index and docs")
+
+    print(f"📘 Loaded {len(texts)} chunks")
+
+    # BM25 index
+    bm25 = BM25Okapi(tokens)
+
+    # Semantic embeddings
+    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    emb = model.encode(texts, convert_to_numpy=True, show_progress_bar=True)
+    faiss.normalize_L2(emb)
+
+    # FAISS index
+    dim = emb.shape[1]
+    index = faiss.IndexFlatIP(dim)
+    index.add(emb)
+
+    Path("backend/store").mkdir(parents=True, exist_ok=True)
+    with open("backend/store/bm25_index.pkl", "wb") as f: pickle.dump(bm25, f)
+    with open("backend/store/docs.pkl", "wb") as f: pickle.dump(metas, f)
+    np.save("backend/store/embeddings.npy", emb)
+    faiss.write_index(index, "backend/store/faiss_index.index")
+
+    print(" Hybrid index saved successfully.")
 
 if __name__ == "__main__":
-    import nltk
-    nltk.download('punkt', quiet=True)
-    import argparse
-    p = argparse.ArgumentParser()
-    p.add_argument("--chunks", default="chunks.jsonl")
-    args = p.parse_args()
-    build_bm25(args.chunks)
+    build_hybrid_index()
