@@ -9,6 +9,18 @@ Pull Command:
 ```bash
 docker pull abhijitdevs/email-rag-app:latest
 ```
+# Docker Usage
+Run the full application:
+``` bash
+docker run -p 8000:8000 -p 8501:8501 abhijitdevs/email-rag-app:latest
+```
+Endpoints:
+``` bash
+Streamlit UI: http://localhost:8501
+
+FastAPI backend: http://localhost:8000
+```
+
 
 # Demo Video
 https://drive.google.com/file/d/1FtMLjnP5VQ-XQtC50DS9Ttds3jzV5A2L/view
@@ -87,25 +99,6 @@ The Streamlit application provides:
 
 The UI is simple, responsive, and optimized for interactive usage.
 
-# Docker Usage
-Build the image:
-``` bash
-docker build -t email-rag-app .
-```
-Pull the published image:
-``` bash
-docker pull abhijitdevs/email-rag-app:latest
-```
-Run the full application:
-``` bash
-docker run -p 8000:8000 -p 8501:8501 abhijitdevs/email-rag-app:latest
-```
-Endpoints:
-``` bash
-Streamlit UI: http://localhost:8501
-
-FastAPI backend: http://localhost:8000
-```
 # Technologies Used
 
 ## Retrieval
