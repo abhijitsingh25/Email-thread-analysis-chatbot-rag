@@ -135,28 +135,6 @@ FastAPI backend: http://localhost:8000
 - Docker
 - Docker Hub
 
-# Project Structure
-EMAIL_RAG/
-│
-├── data/
-│   ├── sliced_emails_labeled.csv
-│   ├── thread_map.json
-│   ├── preprocessing.py
-│   └── add_threads_labels.py
-│
-├── backend/
-│   ├── main.py
-│   └── store/
-│       ├── docs.pkl
-│       ├── bm25_index.pkl
-│       ├── embeddings.npy
-│       └── faiss_index.index
-│
-├── ui/
-│   └── streamlit_app.py
-│
-├── Dockerfile
-└── README.md
 # Author
 Abhijit Singh  
 AI Engineer — NLP, RAG Systems, and Generative AI Applications
