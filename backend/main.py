@@ -7,6 +7,8 @@ from transformers import pipeline
 from nltk.tokenize import word_tokenize
 from pathlib import Path
 import nltk, json   
+import uvicorn
+
 
 nltk.download("punkt", quiet=True)
 
@@ -126,3 +128,6 @@ def ask(req: AskQuery):
 @app.get("/")
 def home():
     return {"status": "Hybrid + Cross-Encoder RAG backend running"}
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="localhost", port=8000, reload=True)
